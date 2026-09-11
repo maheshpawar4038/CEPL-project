@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Perfect360 - Store Inventory & Sales Portal</title>
+  <meta name="description" content="Complete store inventory, daily sales, supplier management, expiry tracking, and profit & loss system." />
+  
+  <!-- Optical character recognition engine for camera barcode & label reading -->
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+      --primary: #2563eb;
+      --primary-hover: #1d4ed8;
+      --green: #16a34a;
+      --green-bg: #eaf7ee;
+      --yellow: #d97706;
+      --yellow-bg: #fef3c7;
+      --red: #dc2626;
+      --red-bg: #fee2e2;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+
+    /* Website Navigation Header */
+    header.website-nav {
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 2rem;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 36px;
+      height: 36px;
+      background: var(--primary);
+      color: white;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+    }
+
+    .brand-title strong {
+      font-size: 1.15rem;
+      color: var(--text);
+      display: block;
+    }
+
+    .brand-title small {
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    nav.nav-links {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    nav.nav-links button {
+      background: transparent;
+      border: none;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--muted);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    nav.nav-links button:hover {
+      background: #f1f5f9;
+      color: var(--text);
+    }
+
+    nav.nav-links button.active {
+      background: #eff6ff;
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .user-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #f1f5f9;
+      padding: 4px 12px 4px 6px;
+      border-radius: 20px;
+    }
+
+    .user-pill .avatar {
+      width: 28px;
+      height: 28px;
+      background: var(--primary);
+      color: white;
+      border-radius: 50%;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+    }
+
+    .user-pill span {
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    /* Main Container */
+    main.container {
+      max-width: 1240px;
+      margin: 1.75rem auto;
+      padding: 0 1.5rem;
+    }
+
+    /* Page View Display */
+    .page-section {
+      display: none;
+    }
+    .page-section.active {
+      display: block;
+    }
+
+    /* Cards & Grids */
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+    }
+
+    .card h2 {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.35rem;
+    }
+
+    .card p.muted {
+      color: var(--muted);
+      font-size: 0.88rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .grid-two {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 860px) {
+      .grid-two {
+        grid-template-columns: 1fr;
+      }
+      header.website-nav {
+        flex-direction: column;
+        gap: 12px;
+      }
+      nav.nav-links {
+        overflow-x: auto;
+        width: 100%;
+        padding-bottom: 4px;
+      }
+    }
+
+    /* Stats Row */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .stat-card span {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .stat-card strong {
+      font-size: 1.75rem;
+      font-weight: 700;
+    }
+
+    .stat-card strong.warning { color: var(--yellow); }
+    .stat-card strong.danger { color: var(--red); }
+    .stat-card strong.success { color: var(--green); }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    th {
+      background: #f8fafc;
+      color: var(--muted);
+      font-weight: 600;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    /* Status Pills */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .pill.warning { background: var(--yellow-bg); color: var(--yellow); }
+    .pill.danger { background: var(--red-bg); color: var(--red); }
+    .pill.checked { background: var(--green-bg); color: var(--green); }
+
+    /* Forms */
+    .form-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1rem;
+      align-items: flex-end;
+    }
+
+    .form-group {
+      flex: 1;
+      min-width: 180px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: #334155;
+      margin-bottom: 4px;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: #ffffff;
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus, select:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
+    }
+
+    button.btn-primary {
+      background: var(--primary);
+      color: white;
+      border: none;
+      padding: 9px 18px;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    button.btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    button.btn-secondary {
+      background: #f1f5f9;
+      color: #334155;
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    button.btn-secondary:hover {
+      background: #e2e8f0;
+    }
+
+    .text-link {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    /* Video Scanner Box */
+    .camera-container {
+      position: relative;
+      width: 100%;
+      height: 250px;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 1rem;
+    }
+
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: none;
+    }
+
+    video.active {
+      display: block;
+    }
+
+    .camera-off-msg {
+      color: #94a3b8;
+      text-align: center;
+    }
+
+    .notice-text {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin-top: 0.75rem;
+    }
+
+    .action-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-top: 1rem;
+    }
+
+    .action-grid button {
+      padding: 1rem;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .action-grid button:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Website Top Navigation Bar -->
+  <header class="website-nav">
+    <div class="brand-group">
+      <div class="brand-logo">P</div>
+      <div class="brand-title">
+        <strong id="headerStoreName">Shree Ganesh Kirana Store</strong>
+        <small>Perfect360 Inventory</small>
+      </div>
+    </div>
+
+    <nav class="nav-links">
+      <button class="active" onclick="switchTab('dashboard', this)">Dashboard</button>
+      <button onclick="switchTab('inventory', this)">Scanner / Add Stock</button>
+      <button onclick="switchTab('stock', this)">Manage Stock</button>
+      <button onclick="switchTab('suppliers', this)">Suppliers</button>
+      <button onclick="switchTab('expiry', this)">Expiring Items</button>
+      <button onclick="switchTab('reports', this)">Profit & Loss</button>
+      <button onclick="switchTab('settings', this)">Settings</button>
+    </nav>
+
+    <div class="user-pill">
+      <div class="avatar" id="headerAvatar">SG</div>
+      <span id="headerOwnerName">Store Admin</span>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- 1. DASHBOARD VIEW -->
+    <section id="tab-dashboard" class="page-section active">
+      <!-- Record Daily Sale Banner -->
+      <article class="card">
+        <h2>Record Daily Sale</h2>
+        <p class="muted">Profit is calculated instantly based on the product's saved buying price.</p>
+        <form class="form-row" onsubmit="handleRecordSale(event)">
+          <div class="form-group">
+            <label>Product Name</label>
+            <input list="productDatalist" id="saleProduct" placeholder="Select or type item" required />
+            <datalist id="productDatalist"></datalist>
+          </div>
+          <div class="form-group" style="max-width: 160px;">
+            <label>Selling Price (₹)</label>
+            <input type="number" step="0.01" min="0.01" id="salePrice" placeholder="0.00" required />
+          </div>
+          <div class="form-group" style="max-width: 120px;">
+            <label>Quantity</label>
+            <input type="number" min="1" id="saleQty" value="1" required />
+          </div>
+          <button type="submit" class="btn-primary">Record Sale</button>
+        </form>
+        <p id="saleNotice" class="notice-text"></p>
+      </article>
+
+      <!-- Key Stats Summary -->
+      <div class="stats-row">
+        <div class="stat-card">
+          <span>Total Products</span>
+          <strong id="statTotalProducts">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>Expiring Soon</span>
+          <strong id="statExpiringSoon" class="warning">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>Out of Stock</span>
+          <strong id="statOutOfStock" class="danger">0</strong>
+        </div>
+        <div class="stat-card">
+          <span>Total Stock Units</span>
+          <strong id="statTotalStock">0</strong>
+        </div>
+      </div>
+
+      <div class="grid-two">
+        <article class="card">
+          <h2>Quick Navigation</h2>
+          <div class="action-grid">
+            <button onclick="switchTabByName('inventory')">📷 Add Product / Scan</button>
+            <button onclick="switchTabByName('stock')">📦 Manage Stock</button>
+            <button onclick="switchTabByName('suppliers')">🚚 Supplier Portal</button>
+            <button onclick="switchTabByName('reports')">📊 View Reports & Profit</button>
+          </div>
+        </article>
+
+        <article class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Expiry Alerts</h2>
+            <button class="text-link" onclick="switchTabByName('expiry')">Manage All</button>
+          </div>
+          <table>
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Expires</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="dashboardExpiryTbody"></tbody>
+          </table>
+        </article>
+      </div>
+    </section>
+
+    <!-- 2. INVENTORY SCANNER / ADD STOCK -->
+    <section id="tab-inventory" class="page-section">
+      <div class="grid-two">
+        <article class="card">
+          <h2>Product Label Scanner</h2>
+          <p class="muted">Scan manufacturing and expiry dates directly using your camera.</p>
+          
+          <div class="camera-container">
+            <video id="webcam" playsinline muted></video>
+            <div id="camPlaceholder" class="camera-off-msg">Camera is currently off</div>
+          </div>
+
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="btnStartCam" class="btn-primary" onclick="startCamera()">Start Camera</button>
+            <button id="btnScanCam" class="btn-secondary" disabled onclick="captureAndOcr()">Scan Label Text</button>
+            <button id="btnStopCam" class="btn-secondary" disabled onclick="stopCamera()">Stop</button>
+          </div>
+          <p id="camNotice" class="notice-text">Point camera at the packaging label and click "Scan Label Text".</p>
+        </article>
+
+        <article class="card">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Add or Inward Stock</h2>
+            <button class="text-link" type="button" onclick="enableManualEntry()">Manual Entry</button>
+          </div>
+          <p class="muted">Add stock units. If it is a new product, provide the unit buying price.</p>
+
+          <form id="stockForm" onsubmit="handleAddStock(event)">
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label>Product Name</label>
+              <input id="prodName" required placeholder="Product name" />
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 12px;">
+              <div class="form-group">
+                <label>MFG Date</label>
+                <input type="date" id="prodMfg" required />
+              </div>
+              <div class="form-group">
+                <label>Expiry Date</label>
+                <input type="date" id="prodExp" required />
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 12px;">
+              <label>Category</label>
+              <select id="prodCategory">
+                <option value="Dairy">Dairy</option>
+                <option value="Bakery">Bakery</option>
+                <option value="Beverages">Beverages</option>
+                <option value="Produce">Produce</option>
+                <option value="Grocery">Grocery</option>
+                <option value="Personal Care">Personal Care</option>
+              </select>
+            </div>
+
+            <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+              <div class="form-group">
+                <label>Buying Price (₹)</label>
+                <input type="number" step="0.01" min="0.01" id="prodBuyPrice" placeholder="Only for new item" />
+              </div>
+              <div class="form-group">
+                <label>Quantity to Inward</label>
+                <input type="number" min="1" id="prodQty" placeholder="10" required />
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" style="width: 100%;">Update Stock</button>
+            <p id="stockNotice" class="notice-text"></p>
+          </form>
+        </article>
+      </div>
+    </section>
+
+    <!-- 3. MANAGE STOCK -->
+    <section id="tab-stock" class="page-section">
+      <article class="card">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 12px;">
+          <div>
+            <h2>Manage Current Stock</h2>
+            <p class="muted" style="margin: 0;">Items with ≤5 units are marked Low Stock; 0 units are Out of Stock.</p>
+          </div>
+          <input type="text" id="stockSearchInput" placeholder="Search product or category..." oninput="renderStockTable()" style="max-width: 260px;" />
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Quantity</th>
+              <th>Buying Price</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="stockTbody"></tbody>
+        </table>
+      </article>
+    </section>
+
+    <!-- 4. SUPPLIERS -->
+    <section id="tab-suppliers" class="page-section">
+      <article class="card">
+        <h2>Log Inward Delivery</h2>
+        <form class="form-row" onsubmit="handleAddSupplier(event)" style="margin-top: 1rem;">
+          <div class="form-group">
+            <label>Agency Name</label>
+            <input id="supAgency" required placeholder="e.g. Amul Logistics" />
+          </div>
+          <div class="form-group">
+            <label>Contact Number</label>
+            <input id="supContact" required placeholder="Phone number" />
+          </div>
+          <div class="form-group">
+            <label>Category</label>
+            <select id="supCategory">
+              <option value="Dairy">Dairy</option>
+              <option value="Bakery">Bakery</option>
+              <option value="Beverages">Beverages</option>
+              <option value="Produce">Produce</option>
+              <option value="Grocery">Grocery</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Items Supplied</label>
+            <input id="supItems" required placeholder="e.g. Milk (50L), Cheese (10kg)" />
+          </div>
+          <button type="submit" class="btn-primary">Save Delivery</button>
+        </form>
+      </article>
+
+      <article class="card">
+        <h2>Agency Deliveries Log</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Agency</th>
+              <th>Contact</th>
+              <th>Category</th>
+              <th>Items</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="suppliersTbody"></tbody>
+        </table>
+      </article>
+    </section>
+
+    <!-- 5. EXPIRING ITEMS -->
+    <section id="tab-expiry" class="page-section">
+      <article class="card">
+        <h2>Expiry Management</h2>
+        <p class="muted">Perishable batches expiring within 10 days. Click <strong>Mark check</strong> to confirm verification and clear the alert from your Dashboard.</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Batch</th>
+              <th>Expiry Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="expiryTbody"></tbody>
+        </table>
+      </article>
+    </section>
+
+    <!-- 6. REPORTS & PROFIT/LOSS -->
+    <section id="tab-reports" class="page-section">
+      <div class="stats-row">
+        <div class="stat-card">
+          <span>Today's Revenue</span>
+          <strong id="repTodayRev">₹0.00</strong>
+        </div>
+        <div class="stat-card">
+          <span>Today's Profit</span>
+          <strong id="repTodayProfit" class="success">₹0.00</strong>
+        </div>
+        <div class="stat-card">
+          <span>Monthly Revenue</span>
+          <strong id="repMonthRev">₹0.00</strong>
+        </div>
+        <div class="stat-card">
+          <span>Monthly Profit</span>
+          <strong id="repMonthProfit" class="success">₹0.00</strong>
+        </div>
+      </div>
+
+      <article class="card">
+        <h2>Sales & Profit History</h2>
+        <p class="muted">Calculated using: (Selling Price − Saved Buying Price) × Quantity.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Buying (₹)</th>
+              <th>Selling (₹)</th>
+              <th>Quantity</th>
+              <th>Net Profit</th>
+            </tr>
+          </thead>
+          <tbody id="salesTbody"></tbody>
+        </table>
+      </article>
+    </section>
+
+    <!-- 7. SETTINGS -->
+    <section id="tab-settings" class="page-section">
+      <article class="card" style="max-width: 500px;">
+        <h2>Store Profile Settings</h2>
+        <form onsubmit="handleSaveSettings(event)" style="margin-top: 1rem;">
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label>Store Administrator</label>
+            <input id="setOwner" required value="Team MindSpark" />
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label>Store Name</label>
+            <input id="setStore" required value="Shree Ganesh Kirana Store" />
+          </div>
+          <button type="submit" class="btn-primary">Save Profile</button>
+          <p id="settingsNotice" class="notice-text"></p>
+        </form>
+      </article>
+    </section>
+
+  </main>
+
+  <script>
+    // State Management (Persistent to browser localStorage)
+    const STORAGE_KEY = 'PERFECT360_WEB_DB';
+
+    const defaultData = {
+      settings: {
+        storeName: "Shree Ganesh Kirana Store",
+        ownerName: "Team MindSpark"
+      },
+      products: [
+        { id: "amul-milk", name: "Amul Milk 1L", category: "Dairy", quantity: 12, buyingPrice: 45, mfgDate: "2026-09-08", expiryDate: "2026-09-12", batch: "AM-203", checked: false },
+        { id: "britannia-bread", name: "Britannia Bread", category: "Bakery", quantity: 4, buyingPrice: 28, mfgDate: "2026-09-09", expiryDate: "2026-09-14", batch: "BR-881", checked: false },
+        { id: "yogurt-cup", name: "Yogurt Cup", category: "Dairy", quantity: 0, buyingPrice: 18, mfgDate: "2026-09-07", expiryDate: "2026-09-15", batch: "YG-109", checked: false }
+      ],
+      sales: [],
+      suppliers: [
+        { id: "sup-1", agency: "Amul Logistics", contact: "9820011223", category: "Dairy", items: "Amul Milk (50L), Butter" }
+      ]
+    };
+
+    function loadDB() {
+      try {
+        const item = localStorage.getItem(STORAGE_KEY);
+        return item ? JSON.parse(item) : defaultData;
+      } catch {
+        return defaultData;
+      }
+    }
+
+    let DB = loadDB();
+
+    function saveDB() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DB));
+      renderAll();
+    }
+
+    const fmtMoney = (val) => "₹" + Number(val || 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    function getDaysDiff(dateStr) {
+      if (!dateStr) return null;
+      const expTime = new Date(dateStr).getTime();
+      const nowTime = new Date().setHours(0,0,0,0);
+      if (isNaN(expTime)) return null;
+      return Math.ceil((expTime - nowTime) / (1000 * 60 * 60 * 24));
+    }
+
+    // Tab Navigation
+    function switchTab(tabId, btn) {
+      document.querySelectorAll('.page-section').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('nav.nav-links button').forEach(el => el.classList.remove('active'));
+      const target = document.getElementById('tab-' + tabId);
+      if (target) target.classList.add('active');
+      if (btn) btn.classList.add('active');
+    }
+
+    function switchTabByName(tabId) {
+      const btn = Array.from(document.querySelectorAll('nav.nav-links button')).find(b => b.getAttribute('onclick')?.includes(tabId));
+      switchTab(tabId, btn);
+    }
+
+    // Render Methods
+    function renderAll() {
+      // Header
+      document.getElementById('headerStoreName').textContent = DB.settings.storeName;
+      document.getElementById('headerOwnerName').textContent = DB.settings.ownerName;
+      const initials = DB.settings.ownerName.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase() || 'AD';
+      document.getElementById('headerAvatar').textContent = initials;
+      document.getElementById('setOwner').value = DB.settings.ownerName;
+      document.getElementById('setStore').value = DB.settings.storeName;
+
+      // Product Datalist
+      const dl = document.getElementById('productDatalist');
+      dl.innerHTML = DB.products.map(p => `<option value="${p.name}"></option>`).join('');
+
+      // Calculations
+      const totalUnits = DB.products.reduce((acc, p) => acc + Number(p.quantity || 0), 0);
+      const outCount = DB.products.filter(p => Number(p.quantity || 0) <= 0).length;
+
+      const expiringAll = DB.products
+        .map(p => ({ ...p, days: getDaysDiff(p.expiryDate) }))
+        .filter(p => p.days !== null && p.days <= 10)
+        .sort((a, b) => a.days - b.days);
+
+      // Dashboard only shows alerts NOT yet marked checked
+      const dashboardAlerts = expiringAll.filter(p => !p.checked);
+
+      document.getElementById('statTotalProducts').textContent = DB.products.length;
+      document.getElementById('statExpiringSoon').textContent = dashboardAlerts.length;
+      document.getElementById('statOutOfStock').textContent = outCount;
+      document.getElementById('statTotalStock').textContent = totalUnits;
+
+      // 1. Dashboard Expiry Table
+      const dashTbody = document.getElementById('dashboardExpiryTbody');
+      if (dashboardAlerts.length === 0) {
+        dashTbody.innerHTML = `<tr><td colspan="3" style="text-align:center; color: var(--muted);">No pending expiry alerts</td></tr>`;
+      } else {
+        dashTbody.innerHTML = dashboardAlerts.slice(0, 4).map(item => `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.expiryDate}</td>
+            <td><span class="pill ${item.days <= 2 ? 'danger' : 'warning'}">${item.days < 0 ? 'Expired' : item.days + ' days'}</span></td>
+          </tr>
+        `).join('');
+      }
+
+      // 2. Stock Management Table
+      renderStockTable();
+
+      // 3. Suppliers Table
+      const supTbody = document.getElementById('suppliersTbody');
+      if (DB.suppliers.length === 0) {
+        supTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--muted);">No deliveries logged yet</td></tr>`;
+      } else {
+        supTbody.innerHTML = DB.suppliers.map(s => `
+          <tr>
+            <td>${s.agency}</td>
+            <td>${s.contact}</td>
+            <td>${s.category}</td>
+            <td>${s.items}</td>
+            <td><button class="btn-secondary" onclick="handleDeleteSupplier('${s.id}')">Delete</button></td>
+          </tr>
+        `).join('');
+      }
+
+      // 4. Expiry Management Table
+      const expTbody = document.getElementById('expiryTbody');
+      if (expiringAll.length === 0) {
+        expTbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color: var(--muted);">No products expiring soon</td></tr>`;
+      } else {
+        expTbody.innerHTML = expiringAll.map(item => `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.batch || 'STD-01'}</td>
+            <td>${item.expiryDate}</td>
+            <td>
+              ${item.checked 
+                ? `<span class="pill checked">✓ Checked</span>`
+                : `<button class="btn-secondary" onclick="markExpiryCheck('${item.id}')">Mark check</button>`
+              }
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      // 5. Reports & Sales
+      const today = new Date().toISOString().slice(0, 10);
+      const month = today.slice(0, 7);
+
+      const todaySales = DB.sales.filter(s => s.date === today);
+      const monthSales = DB.sales.filter(s => s.date.startsWith(month));
+
+      const todayRev = todaySales.reduce((sum, s) => sum + s.selling * s.quantity, 0);
+      const todayProf = todaySales.reduce((sum, s) => sum + s.profit, 0);
+      const monthRev = monthSales.reduce((sum, s) => sum + s.selling * s.quantity, 0);
+      const monthProf = monthSales.reduce((sum, s) => sum + s.profit, 0);
+
+      document.getElementById('repTodayRev').textContent = fmtMoney(todayRev);
+      document.getElementById('repTodayProfit').textContent = fmtMoney(todayProf);
+      document.getElementById('repMonthRev').textContent = fmtMoney(monthRev);
+      document.getElementById('repMonthProfit').textContent = fmtMoney(monthProf);
+
+      const salesTbody = document.getElementById('salesTbody');
+      if (DB.sales.length === 0) {
+        salesTbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--muted);">No sales recorded yet</td></tr>`;
+      } else {
+        salesTbody.innerHTML = DB.sales.map(s => `
+          <tr>
+            <td>${s.product}</td>
+            <td>${fmtMoney(s.buying)}</td>
+            <td>${fmtMoney(s.selling)}</td>
+            <td>${s.quantity}</td>
+            <td>${fmtMoney(s.profit)}</td>
+          </tr>
+        `).join('');
+      }
+    }
+
+    function renderStockTable() {
+      const q = (document.getElementById('stockSearchInput')?.value || '').toLowerCase();
+      const filtered = DB.products.filter(p => p.name.toLowerCase().includes(q) || p.category.toLowerCase().includes(q));
+      const tbody = document.getElementById('stockTbody');
+      
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color: var(--muted);">No matching stock found</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(item => {
+        const qty = Number(item.quantity || 0);
+        const status = qty <= 0 ? 'Out of stock' : qty <= 5 ? 'Low stock' : 'In stock';
+        const pillClass = status === 'Out of stock' ? 'danger' : status === 'Low stock' ? 'warning' : '';
+        return `
+          <tr>
+            <td>${item.name}</td>
+            <td>${item.category}</td>
+            <td>${qty}</td>
+            <td>${fmtMoney(item.buyingPrice)}</td>
+            <td>
+              <span class="${pillClass}">${status}</span>
+              ${item.checked ? `<span class="pill checked" style="margin-left: 8px;">Checked</span>` : ''}
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Expiry Check Handler
+    function markExpiryCheck(prodId) {
+      const p = DB.products.find(x => x.id === prodId);
+      if (p) {
+        p.checked = true;
+        saveDB();
+      }
+    }
+
+    // Sales Handler
+    function handleRecordSale(e) {
+      e.preventDefault();
+      const name = document.getElementById('saleProduct').value.trim();
+      const sell = Number(document.getElementById('salePrice').value);
+      const qty = Number(document.getElementById('saleQty').value);
+
+      const prod = DB.products.find(p => p.name.toLowerCase() === name.toLowerCase());
+      if (!prod) {
+        document.getElementById('saleNotice').textContent = "Product not found. Please add to inventory first.";
+        return;
+      }
+
+      const profit = (sell - prod.buyingPrice) * qty;
+      prod.quantity = Math.max(0, prod.quantity - qty);
+
+      DB.sales.unshift({
+        id: "sale-" + Date.now(),
+        date: new Date().toISOString().slice(0, 10),
+        product: prod.name,
+        buying: prod.buyingPrice,
+        selling: sell,
+        quantity: qty,
+        profit: profit
+      });
+
+      saveDB();
+      document.getElementById('saleNotice').textContent = `Sale recorded. Net profit: ${fmtMoney(profit)}.`;
+      document.getElementById('saleProduct').value = '';
+      document.getElementById('salePrice').value = '';
+      document.getElementById('saleQty').value = '1';
+      setTimeout(() => document.getElementById('saleNotice').textContent = '', 4000);
+    }
+
+    // Add / Update Stock
+    function handleAddStock(e) {
+      e.preventDefault();
+      const name = document.getElementById('prodName').value.trim();
+      const mfg = document.getElementById('prodMfg').value;
+      const exp = document.getElementById('prodExp').value;
+      const cat = document.getElementById('prodCategory').value;
+      const buyPrice = document.getElementById('prodBuyPrice').value;
+      const qty = Number(document.getElementById('prodQty').value);
+
+      let existing = DB.products.find(p => p.name.toLowerCase() === name.toLowerCase());
+      if (existing) {
+        existing.quantity += qty;
+        if (buyPrice) existing.buyingPrice = Number(buyPrice);
+        if (mfg) existing.mfgDate = mfg;
+        if (exp) existing.expiryDate = exp;
+        existing.checked = false;
+      } else {
+        if (!buyPrice) {
+          document.getElementById('stockNotice').textContent = "Buying price is required for a new product.";
+          return;
+        }
+        DB.products.unshift({
+          id: "prod-" + Date.now(),
+          name,
+          category: cat,
+          quantity: qty,
+          buyingPrice: Number(buyPrice),
+          mfgDate: mfg,
+          expiryDate: exp,
+          batch: "B-" + Math.floor(100 + Math.random() * 900),
+          checked: false
+        });
+      }
+
+      saveDB();
+      document.getElementById('stockNotice').textContent = `Stock saved successfully: ${qty} units of ${name}.`;
+      document.getElementById('stockForm').reset();
+      setTimeout(() => document.getElementById('stockNotice').textContent = '', 4000);
+    }
+
+    function enableManualEntry() {
+      document.getElementById('prodName').readOnly = false;
+      document.getElementById('prodName').focus();
+    }
+
+    // Supplier Handlers
+    function handleAddSupplier(e) {
+      e.preventDefault();
+      DB.suppliers.unshift({
+        id: "sup-" + Date.now(),
+        agency: document.getElementById('supAgency').value.trim(),
+        contact: document.getElementById('supContact').value.trim(),
+        category: document.getElementById('supCategory').value,
+        items: document.getElementById('supItems').value.trim()
+      });
+      saveDB();
+      document.getElementById('supAgency').value = '';
+      document.getElementById('supContact').value = '';
+      document.getElementById('supItems').value = '';
+    }
+
+    function handleDeleteSupplier(id) {
+      DB.suppliers = DB.suppliers.filter(s => s.id !== id);
+      saveDB();
+    }
+
+    // Settings
+    function handleSaveSettings(e) {
+      e.preventDefault();
+      DB.settings.ownerName = document.getElementById('setOwner').value.trim();
+      DB.settings.storeName = document.getElementById('setStore').value.trim();
+      saveDB();
+      document.getElementById('settingsNotice').textContent = "Settings saved successfully.";
+      setTimeout(() => document.getElementById('settingsNotice').textContent = '', 4000);
+    }
+
+    // Camera & OCR Label Scanner
+    let stream = null;
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+        const video = document.getElementById('webcam');
+        video.srcObject = stream;
+        video.classList.add('active');
+        await video.play();
+        document.getElementById('camPlaceholder').style.display = 'none';
+        document.getElementById('btnStartCam').disabled = true;
+        document.getElementById('btnScanCam').disabled = false;
+        document.getElementById('btnStopCam').disabled = false;
+        document.getElementById('camNotice').textContent = "Camera active. Hold label steady and click 'Scan Label Text'.";
+      } catch (err) {
+        document.getElementById('camNotice').textContent = "Camera could not be accessed. Use manual entry.";
+      }
+    }
+
+    function stopCamera() {
+      if (stream) {
+        stream.getTracks().forEach(t => t.stop());
+        stream = null;
+      }
+      const video = document.getElementById('webcam');
+      video.srcObject = null;
+      video.classList.remove('active');
+      document.getElementById('camPlaceholder').style.display = 'block';
+      document.getElementById('btnStartCam').disabled = false;
+      document.getElementById('btnScanCam').disabled = true;
+      document.getElementById('btnStopCam').disabled = true;
+    }
+
+    async function captureAndOcr() {
+      const video = document.getElementById('webcam');
+      if (!video || !window.Tesseract) return;
+
+      document.getElementById('camNotice').textContent = "Reading label text using OCR...";
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth || 640;
+      canvas.height = video.videoHeight || 480;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0);
+
+      try {
+        const result = await window.Tesseract.recognize(canvas, 'eng');
+        const text = result.data.text;
+        
+        // Simple extraction
+        const mfgMatch = text.match(/(?:MFG|MFD)[:\s.-]*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i);
+        const expMatch = text.match(/(?:EXP|EXPIRY|USE BY)[:\s.-]*(\d{1,2}[\/.-]\d{1,2}[\/.-]\d{2,4})/i);
+        
+        if (mfgMatch) document.getElementById('prodMfg').value = formatDate(mfgMatch[1]);
+        if (expMatch) document.getElementById('prodExp').value = formatDate(expMatch[1]);
+
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 3 && !/mfg|exp|batch|rs|mrp/i.test(l));
+        if (lines.length > 0) document.getElementById('prodName').value = lines[0];
+
+        document.getElementById('camNotice').textContent = "Text extracted. Verify dates and enter quantity.";
+      } catch (err) {
+        document.getElementById('camNotice').textContent = "OCR read failed. Please use manual entry.";
+      }
+    }
+
+    function formatDate(str) {
+      const parts = str.replace(/[.-]/g, '/').split('/');
+      if (parts.length === 3) {
+        let [d, m, y] = parts;
+        if (y.length === 2) y = "20" + y;
+        return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      }
+      return '';
+    }
+
+    // Initial load
+    renderAll();
+  </script>
+</body>
+</html>
